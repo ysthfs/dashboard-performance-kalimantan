@@ -38,7 +38,7 @@ def create_chart(df_group):
     # ==============================
     # SLA DATA PREP (AUTO SCALE FIX)
     # ==============================
-    sla_values = df_group["Avg SLA (Minutes)"]
+    sla_values = df_group["Avg SLA (Minutes)"].fillna(0)
 
     min_sla = sla_values.min()
     max_sla = sla_values.max()
@@ -49,7 +49,7 @@ def create_chart(df_group):
     range_sla = max_sla - min_sla
 
     if range_sla == 0:
-        padding = 60
+        padding = max(60, max_sla * 0.5 + 1)
     else:
         padding = range_sla * 0.25
 
@@ -75,7 +75,10 @@ def create_chart(df_group):
     tick_start = int(min_sla // step * step)
     tick_end = int((max_sla // step + 1) * step)
 
-    tick_vals = list(range(int(tick_start), int(tick_end + step), int(step)))
+    tick_vals = np.arange(tick_start, tick_end + step, step).astype(int).tolist()
+    # 🔥 PROTEKSI KOSONG / ERROR RANGE
+    if len(tick_vals) == 0:
+        tick_vals = [0, 60, 120, 180, 240]
     tick_text = [minutes_to_hhmm(int(x)) for x in tick_vals]
 
     # ==============================
@@ -86,7 +89,8 @@ def create_chart(df_group):
         y=sla_values,
         mode="lines",
         line=dict(
-            shape="spline",   # 🔥 FIX DISINI
+            shape="spline",
+            smoothing=1.3,
             width=6,
             color="rgba(0,191,255,0.25)"
         ),
@@ -117,7 +121,8 @@ def create_chart(df_group):
         "<extra></extra>",
 
         line=dict(
-            shape="spline",   # 🔥 FIX DISINI
+            shape="spline",
+            smoothing=1.3,
             width=3,
             color="#00EFFF"
         ),
@@ -188,7 +193,8 @@ def create_chart(df_group):
             range=[min_sla, max_sla],
             tickmode="array",
             tickvals=tick_vals,
-            ticktext=tick_text
+            ticktext=tick_text,
+            tickformat=None,
         ),
         legend=dict(
             orientation="h",
