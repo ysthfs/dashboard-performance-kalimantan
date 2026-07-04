@@ -86,7 +86,7 @@ def create_chart(df_group):
         y=sla_values,
         mode="lines",
         line=dict(
-            shape="linear",   # 🔥 FIX DISINI
+            shape="spline",   # 🔥 FIX DISINI
             width=6,
             color="rgba(0,191,255,0.25)"
         ),
@@ -117,7 +117,7 @@ def create_chart(df_group):
         "<extra></extra>",
 
         line=dict(
-            shape="linear",   # 🔥 FIX DISINI
+            shape="spline",   # 🔥 FIX DISINI
             width=3,
             color="#00EFFF"
         ),
@@ -185,10 +185,11 @@ def create_chart(df_group):
             title="Avg SLA",
             overlaying="y",
             side="right",
-            autorange=True,
-            tickmode="auto"
+            range=[min_sla, max_sla],
+            tickmode="array",
+            tickvals=tick_vals,
+            ticktext=tick_text
         ),
-
         legend=dict(
             orientation="h",
             y=1.02,
