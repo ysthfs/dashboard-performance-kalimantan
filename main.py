@@ -218,13 +218,16 @@ with col_right:
         st.warning("Pilih minimal 1 week")
         st.stop()
 
-    st.caption(f"📅 Week: {min(selected_weeks_city)} - {max(selected_weeks_city)}")
+    if len(selected_weeks_city) == 1:
+        st.caption(f"📅 Week: {selected_weeks_city[0]}")
+    else:
+        st.caption(f"📅 Week: {min(selected_weeks_city)} - {max(selected_weeks_city)}")
 
     df_city_filter = df_city_filter[
         df_city_filter["Week"].isin(selected_weeks_city)
     ]
 
-    df_city = df_city_filter[df_city_filter["Status TT"].str.lower() == "close"] \
+    df_city = df_city_filter[df_city_filter["Status TT"].fillna("").str.lower() == "close"] \
         .groupby("Kota")["Status TT"] \
         .count().reset_index()
 
