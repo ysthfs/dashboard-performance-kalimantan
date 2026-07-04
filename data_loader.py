@@ -3,37 +3,45 @@ import os
 import streamlit as st
 from utils import minutes_to_hhmm
 
+# ==============================
+# LOAD DATA
+# ==============================
 @st.cache_data
 def load_data():
     try: 
-        # 🔥 Path aman untuk local & cloud
         base_path = os.path.dirname(__file__)
         file_path = os.path.join(base_path, "data", "data_tiket.xlsx")
 
-        df = pd.read_excel(file_path)
+        df = pd.read_excel(file_path, engine="openpyxl")
+
         required_cols = ["Status TT", "SLA Duration Closed", "Month"]
         for col in required_cols:
             if col not in df.columns:
                 st.error(f"Kolom '{col}' tidak ditemukan di file Excel")
                 return pd.DataFrame()
 
-        # ==============================
         # CLEANING
-        # ==============================
-        df["Status TT"] = df["Status TT"].astype(str).str.strip().str.lower()
+        df["Status TT"] = df["Status TT"].fillna("").astype(str).str.strip().str.lower()
         df["Month"] = df["Month"].astype(str).str.strip().str.title()
+
         df["SLA Duration Closed"] = pd.to_timedelta(
             df["SLA Duration Closed"], errors="coerce"
         )
 
         df["SLA Duration Closed"] = df["SLA Duration Closed"].dt.total_seconds() / 60
         df = df.dropna(subset=["SLA Duration Closed"])
+
         return df
+
     except Exception as e:
         st.error(f"Gagal load data: {e}")
         return pd.DataFrame()
 
 
+# ==============================
+# PROCESS DATA
+# ==============================
+@st.cache_data
 def process_data(df):
     if df.empty:
         return pd.DataFrame(), pd.DataFrame()
@@ -61,9 +69,7 @@ def process_data(df):
 
     df_group = df_group.sort_values("Month")
 
-    # ==============================
-    # FORMAT DISPLAY
-    # ==============================
+    # FORMAT
     df_display = df_group.copy()
 
     df_display["Avg SLA (Minutes)"] = df_display["Avg SLA (Minutes)"].apply(
