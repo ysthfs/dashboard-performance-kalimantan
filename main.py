@@ -18,6 +18,16 @@ SLA_WARNING = 360
 apply_style()
 
 st.markdown("""
+<h1 style='text-align: center; margin-bottom: 5px;'>
+    📊 DASHBOARD PERFORMANCE KALIMANTAN
+</h1>
+<p style='text-align: center; font-size: 14px; color: gray; margin-top: 0;'>
+    Monitoring Ticket & SLA Performance
+</p>
+<hr style='margin-top: 10px; margin-bottom: 20px;'>
+""", unsafe_allow_html=True)
+
+st.markdown("""
 <style>
 [data-baseweb="tag"] {
     display: none !important;
@@ -41,8 +51,6 @@ df = load_data()
 if df.empty:
     st.error("Data tidak ditemukan atau kosong")
     st.stop()
-
-
 
 if "Category" not in df.columns:
     st.error("Kolom 'Category' tidak ditemukan")
@@ -72,11 +80,19 @@ with col_filter:
 # ==============================
 # APPLY FILTER
 # ==============================
-df_trend = df[df["Category"].isin(selected_categories)] if selected_categories else df.copy()
+#df_trend = df[df["Category"].isin(selected_categories)] if selected_categories else df.copy()
+if not selected_categories:
+    st.warning("Pilih minimal 1 category")
+    st.stop()
+
+df_trend = df[df["Category"].isin(selected_categories)]
+
 df_group_filter, _ = process_data(df_trend)
+
 if df_group_filter.empty:
     st.warning("Data tidak tersedia untuk filter yang dipilih")
     st.stop()
+
 # ==============================
 # 🔥 METRICS
 # ==============================
@@ -89,8 +105,10 @@ if pd.isna(avg_sla):
 avg_sla_fmt = minutes_to_hhmm(avg_sla)
 status = "❌ Out SLA" if avg_sla > SLA_THRESHOLD else "✅ Meet SLA"
 
-col_m1.metric("🎫 Total Ticket", total_ticket)
-col_m2.metric("⏱ Avg SLA", avg_sla_fmt, status)
+col_m1.metric("🎫 Total Ticket", f"{total_ticket:,}")
+
+delta_color = "inverse" if avg_sla > SLA_THRESHOLD else "normal"
+col_m2.metric("⏱ Avg SLA", avg_sla_fmt, status,delta_color=delta_color)
 
 # ==============================
 # 🔥 MAIN CONTENT
@@ -134,7 +152,7 @@ with col_right:
 
     if not out_sla.empty:
         details = ", ".join(
-            f"{row['Month']} ({row['Avg SLA (HH:MM)']})"
+            f"{row['Month']} ({row.get('Avg SLA (HH:MM)', '-')})"
             for _, row in out_sla.iterrows()
         )
         st.write(f"🚨 Over SLA 4 Hour: **{details}**")
@@ -143,14 +161,22 @@ with col_right:
 
     st.markdown("---")
 
-    if not df_group_filter.empty:
-        most_ticket = df_group_filter.loc[df_group_filter["TT Closed"].idxmax()]
-        least_ticket = df_group_filter.loc[df_group_filter["TT Closed"].idxmin()]
+    tt_series = df_group_filter["TT Closed"].fillna(0)
 
+    tt_valid = tt_series[tt_series > 0]
+
+    if not tt_valid.empty:
+        idx_max = tt_valid.idxmax()
+        idx_min = tt_valid.idxmin()
+    
+        most_ticket = df_group_filter.loc[idx_max]
+        least_ticket = df_group_filter.loc[idx_min]
+    
         st.write(f"🔥 Most Ticket: **{most_ticket['Month']} ({most_ticket['TT Closed']})**")
         st.write(f"📉 Least Ticket: **{least_ticket['Month']} ({least_ticket['TT Closed']})**")
+
     else:
-        st.write("Data tidak tersedia untuk filter yang dipilih")
+        st.write("Data ticket tidak cukup untuk analisis")
     # ==============================
     # CITY
     # ==============================
@@ -170,11 +196,20 @@ with col_right:
     df_city_filter["Week"] = pd.to_numeric(df_city_filter["Week"], errors="coerce")
     df_city_filter = df_city_filter.dropna(subset=["Week"])
     df_city_filter["Week"] = df_city_filter["Week"].astype(int)
+    # Ambil week yang tersedia
+    weeks_available = sorted(df_city_filter["Week"].dropna().unique())
 
+    # Kalau kosong → stop
+    if not weeks_available:
+        st.warning("Data week tidak tersedia")
+        st.stop()
+    
+    st.caption("Filter Week")
+    
     selected_weeks_city = st.multiselect(
         "",
-        options=sorted(df_city_filter["Week"].unique()),
-        default=[df_city_filter["Week"].max()],
+        options=weeks_available,
+        default=[weeks_available[-1]],  # ambil week terakhir yg valid
         key="city_filter",
         placeholder="📅 Week"
     )
@@ -189,7 +224,7 @@ with col_right:
         df_city_filter["Week"].isin(selected_weeks_city)
     ]
 
-    df_city = df_city_filter[df_city_filter["Status TT"] == "close"] \
+    df_city = df_city_filter[df_city_filter["Status TT"].str.lower() == "close"] \
         .groupby("Kota")["Status TT"] \
         .count().reset_index()
 
