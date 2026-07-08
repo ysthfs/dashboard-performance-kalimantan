@@ -25,8 +25,8 @@ try:
     from streamlit_autorefresh import st_autorefresh
     st_autorefresh(interval=30 * 60 * 1000, limit=100, key="refresh")
 except Exception as e:
-    st.warning("Auto refresh disabled:", e)
-
+    st.warning(f"Auto refresh disabled: {e}")
+    
 st.markdown("""
 <h1 style='text-align: center; margin-bottom: 5px;'>
     📊 DASHBOARD PERFORMANCE KALIMANTAN
@@ -348,3 +348,46 @@ with col_right:
 
     if not df_worst.empty:
         st.plotly_chart(fig_city, use_container_width=True)
+
+    # ==============================
+    # 🔥 ROOT CAUSE PIE CHART
+    # ==============================
+    st.markdown("---")
+    st.markdown("### 🧩 Root Cause Distribution")
+    
+    if "Root Cause" not in df_city_filter.columns:
+        st.warning("Kolom 'Root Cause' tidak ditemukan")
+    else:
+        df_root = df_city_filter.copy()
+    
+        # hanya ticket close
+        df_root = df_root[
+            df_root["Status TT"].fillna("").str.lower() == "close"
+        ]
+    
+        # grouping
+        df_root_group = (
+            df_root.groupby("Root Cause")
+            .size()
+            .reset_index(name="Total")
+        )
+    
+        if df_root_group.empty:
+            st.warning("Tidak ada data Root Cause")
+        else:
+            fig_root = px.pie(
+                df_root_group,
+                names="Root Cause",
+                values="Total",
+                hole=0.4  # donut style 😎
+            )
+    
+            fig_root.update_traces(textinfo="percent+label+value")
+    
+            fig_root.update_layout(
+                template="plotly_dark",
+                height=300,
+                margin=dict(l=0, r=0, t=30, b=0)
+            )
+    
+            st.plotly_chart(fig_root, use_container_width=True)
