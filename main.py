@@ -5,6 +5,7 @@ from chart import create_chart
 from style import apply_style
 from utils import minutes_to_hhmm, highlight_sla, add_icon, highlight_tt
 import plotly.express as px
+from streamlit_autorefresh import st_autorefresh
 
 # ==============================
 # CONSTANT
@@ -12,10 +13,14 @@ import plotly.express as px
 SLA_THRESHOLD = 240
 SLA_WARNING = 360
 
+# 🔥 BEST PRACTICE
+COL_PROJECT = "Type Project"
+
 # ==============================
 # STYLE
 # ==============================
 apply_style()
+st_autorefresh(interval=60000, key="datarefresh")
 
 st.markdown("""
 <h1 style='text-align: center; margin-bottom: 5px;'>
@@ -47,45 +52,52 @@ div[data-baseweb="select"] {
 # ==============================
 # LOAD DATA
 # ==============================
-df = load_data()
+with st.spinner("Loading data..."):
+    df = load_data()
+    df.columns = df.columns.str.strip()
 if df.empty:
     st.error("Data tidak ditemukan atau kosong")
     st.stop()
 
-if "Category" not in df.columns:
-    st.error("Kolom 'Category' tidak ditemukan")
+if COL_PROJECT not in df.columns:
+    st.error("Kolom 'Type Project' tidak ditemukan")
     st.stop()
 
-# 🔥 ambil category (custom order biar rapi)
+# 🔥 ambil Type Project (custom order biar rapi)
 order = ["Fiberization", "Connectivity", "Prosky", "BB FTTH"]
-categories = [c for c in order if c in df["Category"].dropna().unique()]
+unique_values = df[COL_PROJECT].dropna().unique()
+categories = list(dict.fromkeys(order + list(unique_values)))
+
+# fallback kalau kosong
+if not categories:
+    categories = sorted(unique_values)
 
 # ==============================
 # 🔥 HEADER
 # ==============================
-st.markdown("## 📈 Trend by Category")
-st.caption("Filter Category")
+
+st.caption("Filter Type Project")
 
 col_filter, _ = st.columns([1, 4])
 
 with col_filter:
-    selected_categories = st.multiselect(
+    selected_projects = st.multiselect(
         "",
         options=categories,
         default=categories,
-        key="category_filter",
-        placeholder="📊 Select Category"
+        key="type_project_filter",
+        placeholder="📊 Select Type Project"
     )
 
 # ==============================
 # APPLY FILTER
 # ==============================
-#df_trend = df[df["Category"].isin(selected_categories)] if selected_categories else df.copy()
-if not selected_categories:
-    st.warning("Pilih minimal 1 category")
+#df_trend = df[df[COL_PROJECT].isin(selected_categories)] if selected_categories else df.copy()
+if not selected_projects:
+    st.warning("Pilih minimal 1 Type Project")
     st.stop()
 
-df_trend = df[df["Category"].isin(selected_categories)]
+df_trend = df[df[COL_PROJECT].isin(selected_projects)]
 
 df_group_filter, _ = process_data(df_trend)
 
@@ -99,9 +111,10 @@ if df_group_filter.empty:
 col_m1, col_m2 = st.columns(2)
 
 total_ticket = df_group_filter["TT Closed"].sum()
-avg_sla = df_group_filter["Avg SLA (Minutes)"].mean()
-if pd.isna(avg_sla):
+if df_group_filter["Avg SLA (Minutes)"].dropna().empty:
     avg_sla = 0
+else:
+    avg_sla = df_group_filter["Avg SLA (Minutes)"].mean()
 avg_sla_fmt = minutes_to_hhmm(avg_sla)
 status = "❌ Out SLA" if avg_sla > SLA_THRESHOLD else "✅ Meet SLA"
 
@@ -120,6 +133,10 @@ col_left, col_right = st.columns([2.2, 1.8])
 # ==============================
 with col_left:
 
+    # pastikan kolom HH:MM selalu ada
+    if "Avg SLA (HH:MM)" not in df_group_filter.columns:
+        df_group_filter["Avg SLA (HH:MM)"] = df_group_filter["Avg SLA (Minutes)"].apply(minutes_to_hhmm)
+    
     df_table = df_group_filter[["Month", "TT Closed", "Avg SLA (HH:MM)"]].copy()
 
     df_table["Avg SLA (HH:MM)"] = df_table["Avg SLA (HH:MM)"].apply(
@@ -136,10 +153,72 @@ with col_left:
         hide_index=True
     )
 
-    st.caption(f"📊 {len(selected_categories)} category selected")
+    st.caption(f"📊 {len(selected_projects)} Type Project selected")
 
     fig_trend = create_chart(df_group_filter)
     st.plotly_chart(fig_trend, use_container_width=True)
+    
+    # ==============================
+    # 🔥 OWNER COMPARISON CHART
+    # ==============================
+
+    st.markdown("### Ticket by Owner")
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    if "Owner" not in df_trend.columns:
+        st.warning("Kolom 'Owner' tidak ditemukan")
+    else:
+        df_owner = df_trend.copy()
+
+        # pastikan cuma ticket close
+        df_owner = df_owner[
+            df_owner["Status TT"].fillna("").str.lower() == "close"
+        ]
+
+        # grouping
+        df_owner_group = (
+            df_owner.groupby(["Month", "Owner"])
+            .size()
+            .reset_index(name="Total Ticket")
+        )
+
+        # urutan bulan biar ga acak
+        month_order = ["January","February","March","April","May","June",
+                    "July","August","September","October","November","December"]
+
+        fig_owner = px.bar(
+            df_owner_group,
+            x="Month",
+            y="Total Ticket",
+            color="Owner",
+            barmode="group",  # 👉 bisa ganti "stack"
+            text="Total Ticket",
+            category_orders={"Month": month_order}
+        )
+        
+        fig_owner.update_traces(
+            textposition="outside"
+        )
+        
+        fig_owner.update_layout(
+            uniformtext_minsize=8,
+            uniformtext_mode='hide'
+        )
+        
+        fig_owner.update_yaxes(
+            range=[0, df_owner_group["Total Ticket"].max() * 1.2]
+        )
+        
+        fig_owner.update_layout(
+            template="plotly_dark",
+            height=300,
+            margin=dict(l=0, r=0, t=30, b=0),
+            xaxis_title="Month",
+            yaxis_title="Total Ticket",
+            legend_title="Owner"
+        )
+
+        st.plotly_chart(fig_owner, use_container_width=True)
 
 # ==============================
 # RIGHT
