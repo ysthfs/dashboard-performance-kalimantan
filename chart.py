@@ -25,6 +25,7 @@ def create_chart(df_group):
         marker=dict(color=colors),
 
         text=df_group["TT Closed"],
+        texttemplate="%{text:,}",
         textposition="outside",
         cliponaxis=False,
 
@@ -131,7 +132,7 @@ def create_chart(df_group):
             size=8,
             color=[
                 "#FF3B3B" if v > 480 else "#00EFFF"
-                for v in sla_values
+                for v in sla_values.fillna(0)
             ],
             line=dict(width=2, color="white")
         ),
@@ -165,10 +166,13 @@ def create_chart(df_group):
     # ==============================
     # FINAL LAYOUT
     # ==============================
+    padding_top = max_tt * 0.25
     fig.update_layout(
-        title="Trends Ticket vs MTTR",
-        font=dict(size=16),
-
+        title=dict(
+            text="Trends Ticket vs MTTR",
+            font=dict(size=26)
+        ),
+                
         xaxis=dict(title="Month"),
 
         hovermode="x unified",
@@ -183,7 +187,7 @@ def create_chart(df_group):
             title="TT Closed",
             showgrid=True,
             gridcolor="rgba(255,255,255,0.1)",
-            range=[0, max(90, max_tt + 30)]
+            range=[0, max_tt + padding_top]
         ),
 
         yaxis2=dict(
@@ -203,7 +207,7 @@ def create_chart(df_group):
             xanchor="right"
         ),
 
-        margin=dict(l=40, r=40, t=60, b=80)
+        margin=dict(l=40, r=40, t=90, b=80)
     )
 
     return fig
