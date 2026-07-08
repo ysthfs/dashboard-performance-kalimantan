@@ -20,7 +20,7 @@ COL_PROJECT = "Type Project"
 # STYLE
 # ==============================
 apply_style()
-st_autorefresh(interval=60000, key="datarefresh")
+st_autorefresh(interval=120000, key="datarefresh")
 
 st.markdown("""
 <h1 style='text-align: center; margin-bottom: 5px;'>
