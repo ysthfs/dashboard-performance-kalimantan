@@ -31,7 +31,7 @@ st.markdown("""
 <h1 style='text-align: center; margin-bottom: 5px;'>
     📊 DASHBOARD PERFORMANCE KALIMANTAN
 </h1>
-<p style='text-align: center; font-size: 14px; color: gray; margin-top: 0;'>
+<p style='text-align: center; font-size: 20px; color: white; margin-top: 0;'>
     Monitoring Ticket & SLA Performance
 </p>
 <hr style='margin-top: 10px; margin-bottom: 20px;'>
