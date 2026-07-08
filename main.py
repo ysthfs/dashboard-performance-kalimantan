@@ -23,9 +23,9 @@ apply_style()
 # SAFE AUTO REFRESH
 try:
     from streamlit_autorefresh import st_autorefresh
-    st_autorefresh(interval=120000, key="datarefresh")
+    st_autorefresh(interval=30 * 60 * 1000, limit=100, key="refresh")
 except Exception as e:
-    print("Auto refresh disabled:", e)
+    st.warning("Auto refresh disabled:", e)
 
 st.markdown("""
 <h1 style='text-align: center; margin-bottom: 5px;'>
