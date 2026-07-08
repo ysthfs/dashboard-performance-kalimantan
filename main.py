@@ -5,7 +5,7 @@ from chart import create_chart
 from style import apply_style
 from utils import minutes_to_hhmm, highlight_sla, add_icon, highlight_tt
 import plotly.express as px
-from streamlit_autorefresh import st_autorefresh
+#from streamlit_autorefresh import st_autorefresh
 
 # ==============================
 # CONSTANT
@@ -13,14 +13,19 @@ from streamlit_autorefresh import st_autorefresh
 SLA_THRESHOLD = 240
 SLA_WARNING = 360
 
-# 🔥 BEST PRACTICE
+# BEST PRACTICE
 COL_PROJECT = "Type Project"
 
 # ==============================
 # STYLE
 # ==============================
 apply_style()
-st_autorefresh(interval=120000, key="datarefresh")
+# SAFE AUTO REFRESH
+try:
+    from streamlit_autorefresh import st_autorefresh
+    st_autorefresh(interval=120000, key="datarefresh")
+except Exception as e:
+    print("Auto refresh disabled:", e)
 
 st.markdown("""
 <h1 style='text-align: center; margin-bottom: 5px;'>
