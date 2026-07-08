@@ -6,7 +6,7 @@ from utils import minutes_to_hhmm
 # ==============================
 # LOAD DATA
 # ==============================
-@st.cache_data
+@st.cache_data(ttl=60)
 def load_data():
     try: 
         base_path = os.path.dirname(__file__)
