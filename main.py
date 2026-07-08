@@ -382,7 +382,7 @@ with col_right:
                 hole=0.4  # donut style 😎
             )
     
-            fig_root.update_traces(textinfo="percent+label+value")
+            fig_root.update_traces(textinfo="percent+label")
     
             fig_root.update_layout(
                 template="plotly_dark",
