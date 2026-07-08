@@ -375,14 +375,45 @@ with col_right:
         if df_root_group.empty:
             st.warning("Tidak ada data Root Cause")
         else:
+    
+            # ==============================
+            # 🔥 TARUH DI SINI (TOP 6 + OTHERS)
+            # ==============================
+            top_n = 6
+    
+            df_sorted = df_root_group.sort_values(by="Total", ascending=False)
+    
+            df_top = df_sorted.head(top_n)
+    
+            df_others_total = df_sorted.iloc[top_n:]["Total"].sum()
+    
+            df_others = pd.DataFrame([{
+                "Root Cause": "Others",
+                "Total": df_others_total
+            }])
+    
+            df_final = pd.concat([df_top, df_others], ignore_index=True)
+            df_final = df_final[df_final["Total"] > 0]
+            df_final = df_final.sort_values(by="Total", ascending=False)
+            # ==============================
+            # 🔥 PIE PAKE df_final (BUKAN df_root_group)
+            # ==============================
             fig_root = px.pie(
-                df_root_group,
+                df_final,   # 🔥 INI YANG PENTING
                 names="Root Cause",
                 values="Total",
-                hole=0.4  # donut style 😎
+                hole=0.5
             )
     
-            fig_root.update_traces(textinfo="percent+label")
+            fig_root.update_traces(
+                marker=dict(colors=[
+                    "#636EFA", "#EF553B", "#00CC96",
+                    "#AB63FA", "#FFA15A", "#19D3F3",
+                    "#7f7f7f"  # Others abu-abu
+                ]),
+                textinfo="percent",   # 🔥 biar clean
+                textposition="inside"
+            )
     
             fig_root.update_layout(
                 template="plotly_dark",
