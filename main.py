@@ -396,29 +396,42 @@ with col_right:
             df_final = df_final[df_final["Total"] > 0]
             df_final = df_final.sort_values(by="Total", ascending=False)
             # ==============================
-            # 🔥 PIE PAKE df_final (BUKAN df_root_group)
+            # 🎨 COLOR PALETTE
+            # ==============================
+            colors = [
+                "#636EFA", "#EF553B", "#00CC96",
+                "#AB63FA", "#FFA15A", "#19D3F3",
+                "#7f7f7f"  # Others (abu)
+            ]
+            
+            # ==============================
+            # 🧩 PIE CHART
             # ==============================
             fig_root = px.pie(
-                df_final,   # 🔥 INI YANG PENTING
+                df_final,
                 names="Root Cause",
                 values="Total",
-                hole=0.5
+                hole=0.5,
+                color_discrete_sequence=colors
             )
-    
-            fig_root.update_traces(
-                marker=dict(colors=[
-                    "#636EFA", "#EF553B", "#00CC96",
-                    "#AB63FA", "#FFA15A", "#19D3F3",
-                    "#7f7f7f"  # Others abu-abu
-                ]),
-                textinfo="percent",   # 🔥 biar clean
-                textposition="inside"
-            )
-    
+            
+            # 🔥 TEXT DI TENGAH (LEBIH BERGUNA)
             fig_root.update_layout(
+                annotations=[dict(
+                    text=f"{df_final['Total'].sum()} Issues",
+                    x=0.5, y=0.5,
+                    font_size=13,
+                    showarrow=False
+                )],
                 template="plotly_dark",
                 height=300,
                 margin=dict(l=0, r=0, t=30, b=0)
             )
-    
+            
+            # 🔥 LABEL DI PIE (CLEAN)
+            fig_root.update_traces(
+                textinfo="percent",
+                textposition="inside"
+            )
+            
             st.plotly_chart(fig_root, use_container_width=True)
