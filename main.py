@@ -320,7 +320,13 @@ with col_left:
             df_top15 = df_pivot.sort_values("Total", ascending=False).head(15)
     
             # tampil
-            st.dataframe(df_top15.style.format("{:,}"), use_container_width=True)
+            # 🔥 pastikan semua numeric aman
+            for col in df_top15.columns:
+                if col != "Segment Name iForte":
+                    df_top15[col] = pd.to_numeric(df_top15[col], errors="coerce").fillna(0)
+            
+            # tampil TANPA style
+            st.dataframe(df_top15, use_container_width=True)
 
 # ==============================
 # RIGHT
