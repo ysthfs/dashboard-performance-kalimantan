@@ -377,22 +377,10 @@ with col_right:
         else:
     
             # ==============================
-            # 🔥 TARUH DI SINI (TOP 6 + OTHERS)
+            # 🔥 TARUH DI SINI (All Root Cause)
             # ==============================
-            top_n = 6
-    
-            df_sorted = df_root_group.sort_values(by="Total", ascending=False)
-    
-            df_top = df_sorted.head(top_n)
-    
-            df_others_total = df_sorted.iloc[top_n:]["Total"].sum()
-    
-            df_others = pd.DataFrame([{
-                "Root Cause": "Others",
-                "Total": df_others_total
-            }])
-    
-            df_final = pd.concat([df_top, df_others], ignore_index=True)
+
+            df_final = df_root_group.copy()
             df_final = df_final[df_final["Total"] > 0]
             df_final = df_final.sort_values(by="Total", ascending=False)
             # ==============================
