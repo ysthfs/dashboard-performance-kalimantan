@@ -425,65 +425,52 @@ with col_right:
             st.plotly_chart(fig_root, use_container_width=True)
 
     # ==============================
-    # 🔁 REPETITIVE SEGMENT
+    # 🔥 REPEAT PER BULAN (FIX)
     # ==============================
-    st.markdown("---")
-    st.markdown("### 🔁 Repetitive Segment")
     
     required_cols = ["Segmen ID Cust", "Segment Name iForte", "Status TT", "Month"]
     
     if not all(col in df_trend.columns for col in required_cols):
         st.warning("Kolom segment tidak lengkap")
     else:
+    
+        # ✅ FIX: define df_segment dulu
         df_segment = df_trend.copy()
     
-        # hanya ticket close
         df_segment = df_segment[
             df_segment["Status TT"].fillna("").str.lower() == "close"
         ]
     
-        # detect repeat
+        # grouping per segment + bulan + customer
         df_group = (
             df_segment.groupby(["Month", "Segmen ID Cust", "Segment Name iForte"])
             .size()
             .reset_index(name="Count")
         )
     
+        # ambil yg repeat (>1 dalam bulan yg sama)
         df_repeat = df_group[df_group["Count"] > 1]
     
         if df_repeat.empty:
             st.warning("Tidak ada repetitive segment")
         else:
-            # 🔥 SUMMARY BIAR CLEAN
-            df_repeat_summary = (
-                df_repeat.groupby("Segment Name iForte")["Count"]
-                .sum()
-                .reset_index()
+    
+            df_monthly = (
+                df_repeat.groupby(["Segment Name iForte", "Month"])
+                .size()
+                .reset_index(name="Repeat")
             )
     
-            df_repeat_summary = df_repeat_summary.sort_values("Count", ascending=True)
+            df_pivot = df_monthly.pivot_table(
+                index="Segment Name iForte",
+                columns="Month",
+                values="Repeat",
+                fill_value=0
+            ).reset_index()
     
-            # optional limit biar ga penuh
-            df_repeat_summary = df_repeat_summary.tail(20)
+            month_order = ["January","February","March","April","May","June",
+                           "July","August","September","October","November","December"]
     
-            # 🔥 insight
-            top_segment = df_repeat_summary.sort_values("Count", ascending=False).iloc[0]
-            st.write(f"🔥 Most Repetitive Segment: **{top_segment['Segment Name iForte']} ({top_segment['Count']}x)**")
+            df_pivot = df_pivot.reindex(columns=["Segment Name iForte"] + month_order, fill_value=0)
     
-            # chart
-            fig_segment = px.bar(
-                df_repeat_summary,
-                x="Count",
-                y="Segment Name iForte",
-                orientation="h"
-            )
-    
-            fig_segment.update_layout(
-                template="plotly_dark",
-                height=400,
-                margin=dict(l=0, r=0, t=30, b=0),
-                xaxis_title="Jumlah Repeat",
-                yaxis_title="Segment"
-            )
-    
-            st.plotly_chart(fig_segment, use_container_width=True)
+            st.dataframe(df_pivot, use_container_width=True)
