@@ -229,7 +229,7 @@ with col_left:
 
 
     # ==============================
-    # 🔥 TOP 15 REPETITIVE SEGMENT (PAKAI MONTH)
+    # 🔥 TOP 15 REPETITIVE SEGMENT (FINAL FIX)
     # ==============================
     st.markdown("---")
     st.markdown("### 🔁 Top 15 Repetitive Segment")
@@ -243,90 +243,117 @@ with col_left:
     else:
         df_segment = df_trend.copy()
     
-        # filter close
+        # ==============================
+        # 🔥 FILTER CLOSE
+        # ==============================
         df_segment = df_segment[
             df_segment["Status TT"].fillna("").str.lower() == "close"
         ]
     
         if df_segment.empty:
             st.warning("Tidak ada data close")
-        else:
-            # ==============================
-            # 🔥 STEP 1: CLEAN MONTH
-            # ==============================
-            df_segment["Bulan"] = (
-                df_segment["Month"]
-                .astype(str)
-                .str.strip()
-                .str.title()
-            )
+            st.stop()
     
-            # ==============================
-            # 🔥 STEP 2: HITUNG REPEAT DARI ID
-            # ==============================
-            df_repeat = (
-                df_segment.groupby(["Segmen ID Cust", "Bulan"])
-                .size()
-                .reset_index(name="Repeat")
-            )
+        # ==============================
+        # 🔥 CLEANING WAJIB
+        # ==============================
+        df_segment = df_segment.dropna(subset=["Segmen ID Cust", "Segment Name iForte", "Month"])
     
-            # ==============================
-            # 🔥 STEP 3: MAP KE NAMA
-            # ==============================
-            df_map = df_segment[["Segmen ID Cust", "Segment Name iForte"]].drop_duplicates()
+        df_segment["Segmen ID Cust"] = df_segment["Segmen ID Cust"].astype(str)
     
-            df_repeat = df_repeat.merge(df_map, on="Segmen ID Cust", how="left")
+        df_segment["Segment Name iForte"] = (
+            df_segment["Segment Name iForte"]
+            .astype(str)
+            .str.strip()
+            .str.upper()
+        )
     
-            # ==============================
-            # 🔥 STEP 4: AGGREGATE
-            # ==============================
-            df_final = (
-                df_repeat.groupby(["Segment Name iForte", "Bulan"])["Repeat"]
-                .sum()
-                .reset_index()
-            )
+        df_segment["Bulan"] = (
+            df_segment["Month"]
+            .astype(str)
+            .str.strip()
+            .str.title()
+        )
     
-            # ==============================
-            # 🔥 STEP 5: PIVOT
-            # ==============================
-            df_pivot = df_final.pivot_table(
-                index="Segment Name iForte",
-                columns="Bulan",
-                values="Repeat",
-                fill_value=0
-            ).reset_index()
-
-            # ==============================
-            # 🔥 FIX: URUTAN BULAN (INI KUNCINYA 🔥)
-            # ==============================
-            month_order = [
-                "January", "February", "March", "April", "May", "June",
-                "July", "August", "September", "October", "November", "December"
-            ]
-            
-            # ambil kolom yang ada aja (biar gak error kalau data ga lengkap)
-            existing_months = [m for m in month_order if m in df_pivot.columns]
-            
-            df_pivot = df_pivot.reindex(
-                columns=["Segment Name iForte"] + existing_months,
-                fill_value=0
-            )
-            
-            # ==============================
-            # 🔥 STEP 6: TOP 15
-            # ==============================
-            df_pivot["Total"] = df_pivot.drop(columns=["Segment Name iForte"]).sum(axis=1)
+        # ==============================
+        # 🔥 STEP 1: HITUNG BERDASARKAN ID (AMAN)
+        # ==============================
+        df_repeat = (
+            df_segment.groupby(["Segmen ID Cust", "Bulan"])
+            .size()
+            .reset_index(name="Repeat")
+        )
     
-            df_top15 = df_pivot.sort_values("Total", ascending=False).head(15)
+        # ==============================
+        # 🔥 STEP 2: AMBIL NAMA PALING VALID (MODE 🔥)
+        # ==============================
+        df_map = (
+            df_segment.groupby("Segmen ID Cust")["Segment Name iForte"]
+            .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0])
+            .reset_index()
+        )
     
-            # tampil
-            # 🔥 pastikan semua numeric aman
-            for col in df_top15.columns:
-                if col != "Segment Name iForte":
-                    df_top15[col] = pd.to_numeric(df_top15[col], errors="coerce").fillna(0)
-            
-            # tampil TANPA style
-            st.dataframe(df_top15, use_container_width=True)
+        # ==============================
+        # 🔥 STEP 3: MERGE BALIK
+        # ==============================
+        df_repeat = df_repeat.merge(df_map, on="Segmen ID Cust", how="left")
+    
+        # ==============================
+        # 🔥 STEP 4: AGGREGATE KE SEGMENT
+        # ==============================
+        df_final = (
+            df_repeat.groupby(["Segment Name iForte", "Bulan"])["Repeat"]
+            .sum()
+            .reset_index()
+        )
+    
+        # ==============================
+        # 🔥 STEP 5: PIVOT (ANTI ERROR)
+        # ==============================
+        df_pivot = df_final.pivot_table(
+            index="Segment Name iForte",
+            columns="Bulan",
+            values="Repeat",
+            aggfunc="sum",
+            fill_value=0
+        ).reset_index()
+    
+        # ==============================
+        # 🔥 URUTAN BULAN
+        # ==============================
+        month_order = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ]
+    
+        existing_months = [m for m in month_order if m in df_pivot.columns]
+    
+        df_pivot = df_pivot.reindex(
+            columns=["Segment Name iForte"] + existing_months,
+            fill_value=0
+        )
+    
+        # ==============================
+        # 🔥 STEP 6: HITUNG TOTAL
+        # ==============================
+        df_pivot["Total"] = df_pivot.drop(columns=["Segment Name iForte"]).sum(axis=1)
+    
+        # ==============================
+        # 🔥 STEP 7: TOP 15
+        # ==============================
+        df_top15 = df_pivot.sort_values("Total", ascending=False).head(15)
+    
+        # ==============================
+        # 🔥 FINAL SAFETY (ANTI ERROR STREAMLIT)
+        # ==============================
+        for col in df_top15.columns:
+            if col != "Segment Name iForte":
+                df_top15[col] = pd.to_numeric(df_top15[col], errors="coerce").fillna(0)
+    
+        # ==============================
+        # 🔥 DISPLAY
+        # ==============================
+        st.dataframe(df_top15, use_container_width=True)
 
 # ==============================
 # RIGHT
