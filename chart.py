@@ -1,4 +1,5 @@
 import plotly.graph_objects as go
+import plotly.express as px
 from utils import minutes_to_hhmm
 import numpy as np
 
@@ -208,6 +209,37 @@ def create_chart(df_group):
         ),
 
         margin=dict(l=40, r=40, t=90, b=80)
+    )
+
+    return fig
+
+# ==============================
+# 🔥 NEW CHART (TOP 15 SEGMENT)
+# ==============================
+def create_top15_segment_chart(df_summary):
+
+    df_sorted = df_summary.sort_values(
+        by="Total Repetitive", ascending=False
+    )
+
+    df_top15 = df_sorted.head(min(15, len(df_sorted)))
+
+    fig = px.bar(
+        df_top15,
+        x="Total Repetitive",
+        y="Segmen Name iForte",
+        orientation="h",
+        title="Top 15 Repetitive Segment"
+    )
+
+    # warna highlight
+    colors = ["#FF3B3B"] + ["#00EFFF"] * (len(df_top15)-1)
+    fig.update_traces(marker_color=colors)
+
+    fig.update_layout(
+        yaxis={'categoryorder':'total ascending'},
+        height=600,
+        margin=dict(l=40, r=40, t=80, b=40)
     )
 
     return fig
