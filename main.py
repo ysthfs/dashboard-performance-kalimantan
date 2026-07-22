@@ -430,7 +430,7 @@ with col_right:
     st.markdown("---")
     st.markdown("### 🔁 Repetitive Segment")
     
-    required_cols = ["Segmen ID Cust", "Segmen Name iForte", "Status TT", "Month"]
+    required_cols = ["Segmen ID Cust", "Segment Name iForte", "Status TT", "Month"]
     
     if not all(col in df_trend.columns for col in required_cols):
         st.warning("Kolom segment tidak lengkap")
@@ -444,7 +444,7 @@ with col_right:
     
         # detect repeat
         df_group = (
-            df_segment.groupby(["Month", "Segmen ID Cust", "Segmen Name iForte"])
+            df_segment.groupby(["Month", "Segmen ID Cust", "Segment Name iForte"])
             .size()
             .reset_index(name="Count")
         )
@@ -456,7 +456,7 @@ with col_right:
         else:
             # 🔥 SUMMARY BIAR CLEAN
             df_repeat_summary = (
-                df_repeat.groupby("Segmen Name iForte")["Count"]
+                df_repeat.groupby("Segment Name iForte")["Count"]
                 .sum()
                 .reset_index()
             )
@@ -468,13 +468,13 @@ with col_right:
     
             # 🔥 insight
             top_segment = df_repeat_summary.sort_values("Count", ascending=False).iloc[0]
-            st.write(f"🔥 Most Repetitive Segment: **{top_segment['Segmen Name iForte']} ({top_segment['Count']}x)**")
+            st.write(f"🔥 Most Repetitive Segment: **{top_segment['Segment Name iForte']} ({top_segment['Count']}x)**")
     
             # chart
             fig_segment = px.bar(
                 df_repeat_summary,
                 x="Count",
-                y="Segmen Name iForte",
+                y="Segment Name iForte",
                 orientation="h"
             )
     
