@@ -425,13 +425,12 @@ with col_right:
             st.plotly_chart(fig_root, use_container_width=True)
 
     # ==============================
-    # 🔥 TOP 15 REPETITIVE SEGMENT (FIX FINAL)
+    # 🔥 TOP 15 REPETITIVE SEGMENT (PAKAI MONTH)
     # ==============================
     st.markdown("---")
     st.markdown("### 🔁 Top 15 Repetitive Segment")
     
-    # validasi kolom
-    required_cols = ["Segmen ID Cust", "Segment Name iForte", "Tanggal Close", "Status TT"]
+    required_cols = ["Segmen ID Cust", "Segment Name iForte", "Month", "Status TT"]
     
     missing_cols = [col for col in required_cols if col not in df_trend.columns]
     
@@ -440,7 +439,7 @@ with col_right:
     else:
         df_segment = df_trend.copy()
     
-        # filter hanya ticket close
+        # filter close
         df_segment = df_segment[
             df_segment["Status TT"].fillna("").str.lower() == "close"
         ]
@@ -449,13 +448,12 @@ with col_right:
             st.warning("Tidak ada data close")
         else:
             # ==============================
-            # 🔥 STEP 1: BUAT BULAN
+            # 🔥 STEP 1: PAKAI MONTH LANGSUNG
             # ==============================
-            df_segment["Tanggal Close"] = pd.to_datetime(df_segment["Tanggal Close"], errors="coerce")
-            df_segment["Bulan"] = df_segment["Tanggal Close"].dt.strftime("%b")
+            df_segment["Bulan"] = df_segment["Month"]
     
             # ==============================
-            # 🔥 STEP 2: HITUNG REPEAT DARI ID (INI KUNCI 🔥)
+            # 🔥 STEP 2: HITUNG REPEAT DARI ID
             # ==============================
             df_repeat = (
                 df_segment.groupby(["Segmen ID Cust", "Bulan"])
@@ -464,14 +462,14 @@ with col_right:
             )
     
             # ==============================
-            # 🔥 STEP 3: MAP KE NAMA SEGMENT
+            # 🔥 STEP 3: MAP KE NAMA
             # ==============================
             df_map = df_segment[["Segmen ID Cust", "Segment Name iForte"]].drop_duplicates()
     
             df_repeat = df_repeat.merge(df_map, on="Segmen ID Cust", how="left")
     
             # ==============================
-            # 🔥 STEP 4: AGGREGATE KE SEGMENT NAME
+            # 🔥 STEP 4: AGGREGATE
             # ==============================
             df_final = (
                 df_repeat.groupby(["Segment Name iForte", "Bulan"])["Repeat"]
@@ -480,7 +478,7 @@ with col_right:
             )
     
             # ==============================
-            # 🔥 STEP 5: PIVOT (FORMAT TABLE)
+            # 🔥 STEP 5: PIVOT
             # ==============================
             df_pivot = df_final.pivot_table(
                 index="Segment Name iForte",
@@ -496,20 +494,5 @@ with col_right:
     
             df_top15 = df_pivot.sort_values("Total", ascending=False).head(15)
     
-            # ==============================
-            # 🔥 STEP 7: TAMPILIN TABLE
-            # ==============================
+            # tampil
             st.dataframe(df_top15, use_container_width=True)
-    
-            # ==============================
-            # 🔥 STEP 8: (OPTIONAL) KE CHART
-            # ==============================
-            df_chart = df_top15.melt(
-                id_vars="Segment Name iForte",
-                var_name="Bulan",
-                value_name="Repeat"
-            )
-    
-            # kalau mau kirim ke chart lama lo
-            # fig = create_top15_segment_chart(df_chart)
-            # st.plotly_chart(fig, use_container_width=True)
