@@ -232,14 +232,21 @@ def create_top15_segment_chart(df_summary):
         title="Top 15 Repetitive Segment"
     )
 
-    # warna highlight
+    # warna highlight top 1
     colors = ["#FF3B3B"] + ["#00EFFF"] * (len(df_top15)-1)
     fig.update_traces(marker_color=colors)
 
+    # 🔥 TEXT + HOVER
+    fig.update_traces(
+        text=df_top15["Total Repetitive"],
+        textposition="outside",
+        hovertemplate="<b>%{y}</b><br>Repeat: %{x}x<extra></extra>"
+    )
+
     fig.update_layout(
-        yaxis={'categoryorder':'total ascending'},
-        height=600,
-        margin=dict(l=40, r=40, t=80, b=40)
+        yaxis=dict(autorange="reversed"),
+        height=650,
+        margin=dict(l=120, r=40, t=80, b=40)
     )
 
     return fig
