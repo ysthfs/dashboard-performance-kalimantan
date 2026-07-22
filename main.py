@@ -29,7 +29,7 @@ except Exception as e:
     
 st.markdown("""
 <h1 style='text-align: center; margin-bottom: 5px;'>
-    📊 DASHBOARD PERFORMANCE KALIMANTAN
+    📊 DASHBOARD PERFORMANCE RPS KALIMANTAN
 </h1>
 <p style='text-align: center; font-size: 20px; color: white; margin-top: 0;'>
     Monitoring Ticket & SLA Performance
