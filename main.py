@@ -366,13 +366,16 @@ with col_left:
         ]
         
         # ==============================
-        # 🔥 DISPLAY WITH STYLE
+        # 🔥 HEATMAP GRADIENT
         # ==============================
         st.dataframe(
             df_top.style
-            .map(highlight_repeat, subset=month_cols)
+            .background_gradient(cmap="Reds", subset=month_cols)  # 🔥 warna merah gradasi
             .set_properties(subset=["Total"], **{"font-weight": "bold"})
-            .set_properties(subset=["Rank"], **{"text-align": "center", "font-weight": "bold"}),
+            .set_properties(subset=["Rank"], **{
+                "text-align": "center",
+                "font-weight": "bold"
+            }),
             use_container_width=True
         )
 # ==============================
