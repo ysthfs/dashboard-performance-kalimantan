@@ -350,9 +350,31 @@ with col_left:
         df_top = df_top.reset_index(drop=True)
     
         # ==============================
-        # 🔥 DISPLAY
+        # 🔥 HIGHLIGHT FUNCTION PER BULAN
         # ==============================
-        st.dataframe(df_top, use_container_width=True)
+        def highlight_repeat(val):
+            if val >= 4:
+                return "background-color: red; color: white;"
+            elif val >= 2:
+                return "background-color: orange;"
+            return ""
+        
+        # kolom bulan (exclude Segment + Total + Rank)
+        month_cols = [
+            col for col in df_top.columns 
+            if col not in ["Segment Name Customer", "Total", "Rank"]
+        ]
+        
+        # ==============================
+        # 🔥 DISPLAY WITH STYLE
+        # ==============================
+        st.dataframe(
+            df_top.style
+            .map(highlight_repeat, subset=month_cols)
+            .set_properties(subset=["Total"], **{"font-weight": "bold"})
+            .set_properties(subset=["Rank"], **{"text-align": "center", "font-weight": "bold"}),
+            use_container_width=True
+        )
 # ==============================
 # RIGHT
 # ==============================
