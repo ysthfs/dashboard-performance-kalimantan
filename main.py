@@ -233,7 +233,7 @@ with col_left:
 
 
     # ==============================
-    # 🔥 TOP 15 REPETITIVE SEGMENT (NO ID)
+    # 🔥 TOP 15 REPETITIVE SEGMENT
     # ==============================
     st.markdown("---")
     st.markdown("### 🔁 Top 15 Repetitive Segment")
@@ -261,13 +261,14 @@ with col_left:
         # ==============================
         # 🔥 CLEANING
         # ==============================
-        df_segment = df_segment.dropna(subset=["Segment Name Customer", "Month"])
+        df_segment = df_segment.dropna(subset=["Segment Name Customer", "Month"]).copy()
     
         df_segment["Segment Name Customer"] = (
             df_segment["Segment Name Customer"]
             .astype(str)
             .str.strip()
             .str.upper()
+            .str.replace(r'\s+', ' ', regex=True)  # 🔥 extra clean
         )
     
         df_segment["Bulan"] = (
@@ -278,7 +279,7 @@ with col_left:
         )
     
         # ==============================
-        # 🔥 HITUNG REPEAT LANGSUNG
+        # 🔥 HITUNG REPEAT
         # ==============================
         df_repeat = (
             df_segment.groupby(["Segment Name Customer", "Bulan"])
@@ -320,14 +321,19 @@ with col_left:
         # ==============================
         # 🔥 TOP 15
         # ==============================
-        df_top15 = df_pivot.sort_values("Total", ascending=False).head(15)
+        df_top15 = df_pivot.sort_values("Total", ascending=False).head(15).copy()
     
         # ==============================
-        # 🔥 SAFETY
+        # 🔥 SAFETY NUMERIC
         # ==============================
         for col in df_top15.columns:
             if col != "Segment Name Customer":
                 df_top15[col] = pd.to_numeric(df_top15[col], errors="coerce").fillna(0)
+    
+        # ==============================
+        # 🔥 RESET INDEX (INI YANG NGILANGIN NOMOR KIRI)
+        # ==============================
+        df_top15 = df_top15.reset_index(drop=True)
     
         # ==============================
         # 🔥 DISPLAY
