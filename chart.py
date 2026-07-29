@@ -227,7 +227,7 @@ def create_top15_segment_chart(df_summary):
     fig = px.bar(
         df_top15,
         x="Total Repetitive",
-        y="Segmen Name iForte",
+        y="Segment Name",
         orientation="h",
         title="Top 15 Repetitive Segment"
     )
