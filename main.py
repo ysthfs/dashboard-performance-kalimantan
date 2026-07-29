@@ -233,12 +233,12 @@ with col_left:
 
 
     # ==============================
-    # 🔥 TOP 15 REPETITIVE SEGMENT (FINAL FIX)
+    # 🔥 TOP 15 REPETITIVE SEGMENT (NO ID)
     # ==============================
     st.markdown("---")
     st.markdown("### 🔁 Top 15 Repetitive Segment")
     
-    required_cols = ["Segmen ID Cust", "Segment Name Customer", "Month", "Status TT"]
+    required_cols = ["Segment Name Customer", "Month", "Status TT"]
     
     missing_cols = [col for col in required_cols if col not in df_trend.columns]
     
@@ -259,11 +259,9 @@ with col_left:
             st.stop()
     
         # ==============================
-        # 🔥 CLEANING WAJIB
+        # 🔥 CLEANING
         # ==============================
-        df_segment = df_segment.dropna(subset=["Segmen ID Cust", "Segment Name Customer", "Month"])
-    
-        df_segment["Segmen ID Cust"] = df_segment["Segmen ID Cust"].astype(str)
+        df_segment = df_segment.dropna(subset=["Segment Name Customer", "Month"])
     
         df_segment["Segment Name Customer"] = (
             df_segment["Segment Name Customer"]
@@ -280,41 +278,18 @@ with col_left:
         )
     
         # ==============================
-        # 🔥 STEP 1: HITUNG BERDASARKAN ID (AMAN)
+        # 🔥 HITUNG REPEAT LANGSUNG
         # ==============================
         df_repeat = (
-            df_segment.groupby(["Segmen ID Cust", "Bulan"])
+            df_segment.groupby(["Segment Name Customer", "Bulan"])
             .size()
             .reset_index(name="Repeat")
         )
     
         # ==============================
-        # 🔥 STEP 2: AMBIL NAMA PALING VALID (MODE 🔥)
+        # 🔥 PIVOT
         # ==============================
-        df_map = (
-            df_segment.groupby("Segmen ID Cust")["Segment Name Customer"]
-            .agg(lambda x: x.mode().iloc[0] if not x.mode().empty else x.iloc[0])
-            .reset_index()
-        )
-    
-        # ==============================
-        # 🔥 STEP 3: MERGE BALIK
-        # ==============================
-        df_repeat = df_repeat.merge(df_map, on="Segmen ID Cust", how="left")
-    
-        # ==============================
-        # 🔥 STEP 4: AGGREGATE KE SEGMENT
-        # ==============================
-        df_final = (
-            df_repeat.groupby(["Segment Name Customer", "Bulan"])["Repeat"]
-            .sum()
-            .reset_index()
-        )
-    
-        # ==============================
-        # 🔥 STEP 5: PIVOT (ANTI ERROR)
-        # ==============================
-        df_pivot = df_final.pivot_table(
+        df_pivot = df_repeat.pivot_table(
             index="Segment Name Customer",
             columns="Bulan",
             values="Repeat",
@@ -338,17 +313,17 @@ with col_left:
         )
     
         # ==============================
-        # 🔥 STEP 6: HITUNG TOTAL
+        # 🔥 TOTAL
         # ==============================
         df_pivot["Total"] = df_pivot.drop(columns=["Segment Name Customer"]).sum(axis=1)
     
         # ==============================
-        # 🔥 STEP 7: TOP 15
+        # 🔥 TOP 15
         # ==============================
         df_top15 = df_pivot.sort_values("Total", ascending=False).head(15)
     
         # ==============================
-        # 🔥 FINAL SAFETY (ANTI ERROR STREAMLIT)
+        # 🔥 SAFETY
         # ==============================
         for col in df_top15.columns:
             if col != "Segment Name Customer":
