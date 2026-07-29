@@ -367,29 +367,31 @@ with col_left:
         vmax_val = float(df_top[month_cols].max().max()) if not df_top.empty else 1
         
         # ==============================
-        # 🔥 HEATMAP GRADIENT (FINAL)
+        # 🔥 HEATMAP GRADIENT (ANTI CRASH)
         # ==============================
-        st.dataframe(
-            df_top.style
-            .background_gradient(
-                cmap="Reds",
-                subset=month_cols,
-                vmin=0,
-                vmax=vmax_val
-            )
-            .background_gradient(
-                cmap="Reds",
-                subset=["Total"]
-            )
-            .set_properties(subset=["Total"], **{
-                "font-weight": "bold"
-            })
-            .set_properties(subset=["Rank"], **{
-                "text-align": "center",
-                "font-weight": "bold"
-            }),
-            use_container_width=True
-        )
+        def color_scale(val):
+            if val >= 4:
+                return "background-color: #ff4d4d; color: white;"   # merah tua
+            elif val >= 2:
+                return "background-color: #ffa64d;"                # orange
+            elif val > 0:
+                return "background-color: #ffe6e6;"                # merah muda
+            return ""
+        
+        styled = df_top.style
+        
+        for col in month_cols + ["Total"]:
+            styled = styled.applymap(color_scale, subset=[col])
+        
+        styled = styled.set_properties(subset=["Total"], **{
+            "font-weight": "bold"
+        }).set_properties(subset=["Rank"], **{
+            "text-align": "center",
+            "font-weight": "bold"
+        })
+        
+        # 🔥 PENTING: pakai write, BUKAN dataframe
+        st.write(styled)
 # ==============================
 # RIGHT
 # ==============================
