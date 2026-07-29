@@ -233,10 +233,14 @@ with col_left:
 
 
     # ==============================
-    # 🔥 TOP 15 REPETITIVE SEGMENT
+    # 🔥 TOP N REPETITIVE SEGMENT
     # ==============================
     st.markdown("---")
-    st.markdown("### 🔁 Top 15 Repetitive Segment")
+    
+    # 🔥 CONTROL JUMLAH TOP
+    top_n = st.slider("Jumlah Top Segment", 5, 50, 15)
+    
+    st.markdown(f"### 🔁 Top {top_n} Repetitive Segment")
     
     required_cols = ["Segment Name Customer", "Month", "Status TT"]
     
@@ -268,7 +272,7 @@ with col_left:
             .astype(str)
             .str.strip()
             .str.upper()
-            .str.replace(r'\s+', ' ', regex=True)  # 🔥 extra clean
+            .str.replace(r'\s+', ' ', regex=True)
         )
     
         df_segment["Bulan"] = (
@@ -319,27 +323,36 @@ with col_left:
         df_pivot["Total"] = df_pivot.drop(columns=["Segment Name Customer"]).sum(axis=1)
     
         # ==============================
-        # 🔥 TOP 15
+        # 🔥 TOP N (DINAMIS)
         # ==============================
-        df_top15 = df_pivot.sort_values("Total", ascending=False).head(15).copy()
+        df_top = (
+            df_pivot
+            .sort_values("Total", ascending=False)
+            .head(top_n)
+            .copy()
+        )
     
         # ==============================
         # 🔥 SAFETY NUMERIC
         # ==============================
-        for col in df_top15.columns:
+        for col in df_top.columns:
             if col != "Segment Name Customer":
-                df_top15[col] = pd.to_numeric(df_top15[col], errors="coerce").fillna(0)
+                df_top[col] = pd.to_numeric(df_top[col], errors="coerce").fillna(0)
     
         # ==============================
-        # 🔥 RESET INDEX (INI YANG NGILANGIN NOMOR KIRI)
+        # 🔥 TAMBAH RANKING 🔥
         # ==============================
-        df_top15 = df_top15.reset_index(drop=True)
+        df_top.insert(0, "Rank", range(1, len(df_top) + 1))
+    
+        # ==============================
+        # 🔥 RESET INDEX
+        # ==============================
+        df_top = df_top.reset_index(drop=True)
     
         # ==============================
         # 🔥 DISPLAY
         # ==============================
-        st.dataframe(df_top15, use_container_width=True)
-
+        st.dataframe(df_top, use_container_width=True)
 # ==============================
 # RIGHT
 # ==============================
