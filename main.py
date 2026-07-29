@@ -350,28 +350,31 @@ with col_left:
         df_top = df_top.reset_index(drop=True)
     
         # ==============================
-        # 🔥 HIGHLIGHT FUNCTION PER BULAN
+        # 🔥 KOLOM BULAN
         # ==============================
-        def highlight_repeat(val):
-            if val >= 4:
-                return "background-color: red; color: white;"
-            elif val >= 2:
-                return "background-color: orange;"
-            return ""
-        
-        # kolom bulan (exclude Segment + Total + Rank)
         month_cols = [
             col for col in df_top.columns 
             if col not in ["Segment Name Customer", "Total", "Rank"]
         ]
         
         # ==============================
-        # 🔥 HEATMAP GRADIENT
+        # 🔥 HEATMAP GRADIENT (FINAL)
         # ==============================
         st.dataframe(
             df_top.style
-            .background_gradient(cmap="Reds", subset=month_cols)  # 🔥 warna merah gradasi
-            .set_properties(subset=["Total"], **{"font-weight": "bold"})
+            .background_gradient(
+                cmap="Reds",
+                subset=month_cols,
+                vmin=0,
+                vmax=df_top[month_cols].values.max()  # auto scaling 🔥
+            )
+            .background_gradient(  # optional: kasih heatmap juga ke Total
+                cmap="Reds",
+                subset=["Total"]
+            )
+            .set_properties(subset=["Total"], **{
+                "font-weight": "bold"
+            })
             .set_properties(subset=["Rank"], **{
                 "text-align": "center",
                 "font-weight": "bold"
