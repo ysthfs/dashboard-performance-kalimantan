@@ -358,6 +358,15 @@ with col_left:
         ]
         
         # ==============================
+        # 🔥 EXTRA SAFETY (WAJIB)
+        # ==============================
+        df_top[month_cols] = df_top[month_cols].apply(pd.to_numeric, errors="coerce").fillna(0)
+        df_top["Total"] = pd.to_numeric(df_top["Total"], errors="coerce").fillna(0)
+        
+        # safe vmax
+        vmax_val = float(df_top[month_cols].max().max()) if not df_top.empty else 1
+        
+        # ==============================
         # 🔥 HEATMAP GRADIENT (FINAL)
         # ==============================
         st.dataframe(
@@ -366,9 +375,9 @@ with col_left:
                 cmap="Reds",
                 subset=month_cols,
                 vmin=0,
-                vmax=df_top[month_cols].values.max()  # auto scaling 🔥
+                vmax=vmax_val
             )
-            .background_gradient(  # optional: kasih heatmap juga ke Total
+            .background_gradient(
                 cmap="Reds",
                 subset=["Total"]
             )
