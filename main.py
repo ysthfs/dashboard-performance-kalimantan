@@ -36,7 +36,7 @@ st.markdown("""
 </p>
 
 <p style='text-align: center; font-size: 16px; color: #ccc; margin-top: 2px;'>
-    Updates Ticket 19 July 2026
+    Updates Ticket 26 July 2026
 </p>
 <hr style='margin-top: 10px; margin-bottom: 20px;'>
 """, unsafe_allow_html=True)
