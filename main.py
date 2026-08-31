@@ -97,6 +97,31 @@ with col_filter:
         key="type_project_filter",
         placeholder="📊 Select Type Project"
     )
+    
+st.caption("Filter Month")
+
+col_month, _ = st.columns([1, 4])
+
+with col_month:
+    selected_month = st.selectbox(
+        "",
+        options=[
+            "All",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December"
+        ],
+        key="month_filter"
+    )
 
 # ==============================
 # APPLY FILTER
@@ -109,6 +134,11 @@ if not selected_projects:
 df_trend = df[df[COL_PROJECT].isin(selected_projects)]
 
 df_group_filter, _ = process_data(df_trend)
+
+if selected_month != "All":
+    df_group_filter = df_group_filter[
+        df_group_filter["Month"] == selected_month
+    ]
 
 if df_group_filter.empty:
     st.warning("Data tidak tersedia untuk filter yang dipilih")
