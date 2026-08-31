@@ -103,25 +103,39 @@ st.caption("Filter Month")
 col_month, _ = st.columns([1, 4])
 
 with col_month:
-    selected_month = st.selectbox(
-        "",
-        options=[
-            "All",
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December"
-        ],
-        key="month_filter"
-    )
+    selected_month = st.multiselect(
+    "",
+    options=[
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+    ],
+    default=[
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December"
+    ],
+    key="month_filter",
+    placeholder="📅 Select Month"
+)
 
 # ==============================
 # APPLY FILTER
@@ -135,9 +149,9 @@ df_trend = df[df[COL_PROJECT].isin(selected_projects)]
 
 df_group_filter, _ = process_data(df_trend)
 
-if selected_month != "All":
+if selected_month:
     df_group_filter = df_group_filter[
-        df_group_filter["Month"] == selected_month
+        df_group_filter["Month"].isin(selected_month)
     ]
 
 if df_group_filter.empty:
